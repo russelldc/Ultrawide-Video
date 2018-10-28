@@ -39,6 +39,7 @@ UltraWide.prototype.updateAspectRatio = function () {
     const fullscreen = getFullScreenStatus();
 
     const video = document.getElementsByTagName('video');
+    if (!video) return;
 
     // Check if video is already Ultrawide
     const videoAspect = video[0].videoWidth / video[0].videoHeight;
@@ -138,6 +139,8 @@ function checkProximityToBlack(pixelColors) {
 UltraWide.prototype.updateSBSMode = function () {
     if (window.location.host === 'www.youtube.com') {
         const video = document.getElementsByTagName('video');
+        if (!video) return;
+        
         const canvasMask = video[0].nextElementSibling;
         if (canvasMask) {
             canvasMask.hidden = this.sbsToggle;
