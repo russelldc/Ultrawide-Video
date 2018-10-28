@@ -124,8 +124,8 @@ function getPixelColors(video) {
 }
 
 function checkProximityToBlack(pixelColors) {
-    for (pixelColor of pixelColors) {
-        // No single one value of topPixel should be over 30
+    for (const pixelColor of pixelColors) {
+        // No single one value should be over 30
         if (pixelColor.sort()[2] > 30) return false;
 
         // The max difference between any two of the color values should be no more than 5
