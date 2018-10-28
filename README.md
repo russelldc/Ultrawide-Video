@@ -10,4 +10,6 @@
 - Better Icon ✓
 - Support for Flash Player content possible? Maybe override Flash's native fullscreen method?
 
+*Flash support is probably unneeded, due to most Flash-based players having scaling settings in the context menu.*
+
 **please leave feedback**
