@@ -44,13 +44,13 @@ UltraWide.prototype.updateAspectRatio = function () {
     const videoAspect = video[0].videoWidth / video[0].videoHeight;
 
     // Check if video is Ultrawide in 16:9 format
-    const { centerPixelColor, topPixelColor } = getPixelColors(video);
+    const { centerPixelColors, topPixelColors, bottomPixelColors } = getPixelColors(video);
 
     // Check topPixel first, and if it is black, then check if centerPixel is the same color
     // If topPixel is black, and centerPixel is not, then apply the zoom
     let shouldCrop = false;
-    if (checkProximityToBlack(topPixelColor)) {
-        if (!checkProximityToBlack(centerPixelColor)) {
+    if (checkProximityToBlack(topPixelColors) && checkProximityToBlack(bottomPixelColors)) {
+        if (!checkProximityToBlack(centerPixelColors)) {
             shouldCrop = true;
         }
     }
@@ -96,21 +96,42 @@ function getPixelColors(video) {
     canvas.width = video[0].videoWidth;
     const ctx = canvas.getContext('2d');
     ctx.drawImage(video[0], 0, 0, canvas.width, canvas.height);
-    const centerPixelColor = ctx.getImageData(canvas.width / 2, canvas.height / 2, 1, 1).data.slice(0, 3);
-    const topPixelColor = ctx.getImageData(canvas.width / 2, 0, 1, 1).data.slice(0, 3);
 
-    return { centerPixelColor, topPixelColor };
+    const midPoint = canvas.width / 2;
+    const leftThirdPoint = canvas.width / 3;
+    const rightThirdPoint = (2 * canvas.width) / 3;
+    const bottomPoint = canvas.height - 1;
+    const centerPoint = canvas.height / 2;
+
+    const centerPixelColors = [
+        ctx.getImageData(leftThirdPoint, centerPoint, 1, 1).data.slice(0, 3),
+        ctx.getImageData(midPoint, centerPoint, 1, 1).data.slice(0, 3),
+        ctx.getImageData(rightThirdPoint, centerPoint, 1, 1).data.slice(0, 3)
+    ];
+    const topPixelColors = [
+        ctx.getImageData(leftThirdPoint, 0, 1, 1).data.slice(0, 3),
+        ctx.getImageData(midPoint, 0, 1, 1).data.slice(0, 3),
+        ctx.getImageData(rightThirdPoint, 0, 1, 1).data.slice(0, 3)
+    ];
+    const bottomPixelColors = [
+        ctx.getImageData(leftThirdPoint, bottomPoint, 1, 1).data.slice(0, 3),
+        ctx.getImageData(midPoint, bottomPoint, 1, 1).data.slice(0, 3),
+        ctx.getImageData(rightThirdPoint, bottomPoint, 1, 1).data.slice(0, 3)
+    ];
+
+    return { centerPixelColors, topPixelColors, bottomPixelColors };
 }
 
-function checkProximityToBlack(pixelColor) {
-    // No single one value of topPixel should be over 30
-    if (pixelColor.sort()[2] > 30) return false;
+function checkProximityToBlack(pixelColors) {
+    for (pixelColor of pixelColors) {
+        // No single one value of topPixel should be over 30
+        if (pixelColor.sort()[2] > 30) return false;
 
-    // The max difference between any two of the color values should be no more than 5
-    if (Math.abs(pixelColor[1] - pixelColor[2]) > 5) return false;
-    if (Math.abs(pixelColor[0] - pixelColor[2]) > 5) return false;
-    if (Math.abs(pixelColor[0] - pixelColor[1]) > 5) return false;
-
+        // The max difference between any two of the color values should be no more than 5
+        if (Math.abs(pixelColor[1] - pixelColor[2]) > 5) return false;
+        if (Math.abs(pixelColor[0] - pixelColor[2]) > 5) return false;
+        if (Math.abs(pixelColor[0] - pixelColor[1]) > 5) return false;
+    }
     return true;
 }
 
