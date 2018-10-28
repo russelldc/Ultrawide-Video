@@ -35,14 +35,16 @@ header {
 	display:block;
 	margin-bottom:10px;
 }
-.modes input[type="radio"] {
+.modes input[type="radio"], .modes input[type="checkbox"] {
 	display:none;
 }
-.modes input[type="radio"]:checked + label {
+.modes input[type="radio"]:checked + label,
+.modes input[type="checkbox"]:checked + label {
 	border:1px solid rgba(52, 152, 219, 0.5);
 	background:rgba(52, 152, 219, 0.3);
 }
-.modes input[type="radio"]:checked + label .desc {
+.modes input[type="radio"]:checked + label .desc,
+.modes input[type="checkbox"]:checked + label .desc {
 	color:rgba(52, 152, 219, 0.8);
 }
 .modes label {
