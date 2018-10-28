@@ -5,10 +5,10 @@ var modeMap = {
 window.onload = function () {
 	const modes = modesSel.children;
 
-	//Set active mode
+	// Set active mode
 	for (var i = 0, l = modes.length; i < l; i++) modes[i].onclick = onModeClick;
 
-	//Get current active mode
+	// Get current active mode
 	chrome.storage.local.get('extensionMode', function (results) {
 		var mode = Object.keys(modeMap)[results.extensionMode];
 		for (let i = 0, l = modes.length, inp; i < l; i++) {
@@ -16,8 +16,15 @@ window.onload = function () {
 			if (inp.id == mode) { inp.checked = true; break; }
 		}
 	});
+	
+	// Get SBS toggle state
+	chrome.storage.local.get('extensionSBSToggle', function (results) {
+		if (results.extensionSBSToggle) {
+			sbsToggle.checked = true;
+		}
+	});
 
-	//Show help & about
+	// Show help & about
 	helpShow.onclick = function (e) {
 		e.preventDefault(); help.className = 'is-active';
 	}
@@ -25,7 +32,7 @@ window.onload = function () {
 		e.preventDefault(); help.className = null;
 	}
 
-	//Attribution links
+	// Attribution links
 	const aLinks = links.children;
 	for (let i = 0, l = aLinks.length; i < l; i++) if (aLinks[i].tagName == 'A') {
 		aLinks[i].onclick = function () { chrome.tabs.create({ url: this.href }); };
@@ -33,7 +40,9 @@ window.onload = function () {
 }
 
 function onModeClick(e) {
-	if (e.target.tagName == 'INPUT') {
+	if (e.target.type == 'radio') {
 		chrome.storage.local.set({ 'extensionMode': modeMap[e.target.id] }, function () { });
+	} else if (e.target.type = 'checkbox') {
+		chrome.storage.local.set({ 'extensionSBSToggle': e.target.checked }, function () { });
 	}
 }
