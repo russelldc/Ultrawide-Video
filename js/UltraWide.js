@@ -40,18 +40,21 @@ UltraWide.prototype.updateAspectRatio = function () {
 
     const video = document.getElementsByTagName('video');
     if (!video) return;
+    if (!video[0]) return;
+    if (!video[0].videoWidth) return;
 
     // Check if video is already Ultrawide
     const videoAspect = video[0].videoWidth / video[0].videoHeight;
 
     // Check if video is Ultrawide in 16:9 format
-    const { centerPixelColors, topPixelColors, bottomPixelColors } = getPixelColors(video);
+    const { centerPixelColor, topPixelColor, bottomPixelColor } = getPixelColors(video);
 
     // Check topPixel first, and if it is black, then check if centerPixel is the same color
     // If topPixel is black, and centerPixel is not, then apply the zoom
     let shouldCrop = false;
-    if (checkProximityToBlack(topPixelColors) && checkProximityToBlack(bottomPixelColors)) {
-        if (!checkProximityToBlack(centerPixelColors)) {
+
+    if (checkProximityToBlack(topPixelColor) && checkProximityToBlack(bottomPixelColor)) {
+        if (!checkProximityToBlack(centerPixelColor)) {
             shouldCrop = true;
         }
     }
@@ -98,41 +101,56 @@ function getPixelColors(video) {
     const ctx = canvas.getContext('2d');
     ctx.drawImage(video[0], 0, 0, canvas.width, canvas.height);
 
-    const midPoint = canvas.width / 2;
-    const leftThirdPoint = canvas.width / 3;
-    const rightThirdPoint = (2 * canvas.width) / 3;
-    const bottomPoint = canvas.height - 1;
-    const centerPoint = canvas.height / 2;
+    const centerHeight = canvas.height - canvas.height / 4.5;
+    const topBottomHeight = canvas.height / 9;
 
-    const centerPixelColors = [
-        ctx.getImageData(leftThirdPoint, centerPoint, 1, 1).data.slice(0, 3),
-        ctx.getImageData(midPoint, centerPoint, 1, 1).data.slice(0, 3),
-        ctx.getImageData(rightThirdPoint, centerPoint, 1, 1).data.slice(0, 3)
-    ];
-    const topPixelColors = [
-        ctx.getImageData(leftThirdPoint, 0, 1, 1).data.slice(0, 3),
-        ctx.getImageData(midPoint, 0, 1, 1).data.slice(0, 3),
-        ctx.getImageData(rightThirdPoint, 0, 1, 1).data.slice(0, 3)
-    ];
-    const bottomPixelColors = [
-        ctx.getImageData(leftThirdPoint, bottomPoint, 1, 1).data.slice(0, 3),
-        ctx.getImageData(midPoint, bottomPoint, 1, 1).data.slice(0, 3),
-        ctx.getImageData(rightThirdPoint, bottomPoint, 1, 1).data.slice(0, 3)
-    ];
+    const centerPixelColor = getAverageColor(
+        ctx.getImageData(0, canvas.height / 9, canvas.width, centerHeight).data,
+        canvas.width,
+        topBottomHeight
+    );
+    const topPixelColor = getAverageColor(
+        ctx.getImageData(0, 0, canvas.width, topBottomHeight).data,
+        canvas.width,
+        topBottomHeight
+    );
+    const bottomPixelColor = getAverageColor(
+        ctx.getImageData(0, canvas.height - canvas.height / 9, canvas.width, topBottomHeight).data,
+        canvas.width,
+        topBottomHeight
+    );
 
-    return { centerPixelColors, topPixelColors, bottomPixelColors };
+    return { centerPixelColor, topPixelColor, bottomPixelColor };
 }
 
-function checkProximityToBlack(pixelColors) {
-    for (const pixelColor of pixelColors) {
-        // No single one value should be over 30
-        if (pixelColor.sort()[2] > 30) return false;
+function getAverageColor(imageData, width, height) {
+    let red = 0,
+        green = 0,
+        blue = 0,
+        length = 4 * width * height;
 
-        // The max difference between any two of the color values should be no more than 5
-        if (Math.abs(pixelColor[1] - pixelColor[2]) > 5) return false;
-        if (Math.abs(pixelColor[0] - pixelColor[2]) > 5) return false;
-        if (Math.abs(pixelColor[0] - pixelColor[1]) > 5) return false;
+    for (var i = 0; i < length; i += 4) {
+        red += imageData[i];
+        green += imageData[i + 1];
+        blue += imageData[i + 2];
     }
+    length = length / 4;
+    red = Math.round(red / length);
+    green = Math.round(green / length);
+    blue = Math.round(blue / length);
+
+    return [red, green, blue];
+}
+
+function checkProximityToBlack(pixelColor) {
+    // No single one value should be over 30
+    if (pixelColor.sort()[2] > 30) return false;
+
+    // The max difference between any two of the color values should be no more than 5
+    if (Math.abs(pixelColor[1] - pixelColor[2]) > 5) return false;
+    if (Math.abs(pixelColor[0] - pixelColor[2]) > 5) return false;
+    if (Math.abs(pixelColor[0] - pixelColor[1]) > 5) return false;
+
     return true;
 }
 
@@ -140,7 +158,7 @@ UltraWide.prototype.updateSBSMode = function () {
     if (window.location.host === 'www.youtube.com') {
         const video = document.getElementsByTagName('video');
         if (!video) return;
-        
+
         const canvasMask = video[0].nextElementSibling;
         if (canvasMask) {
             canvasMask.hidden = this.sbsToggle;
